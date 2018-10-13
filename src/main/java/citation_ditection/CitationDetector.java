@@ -16,6 +16,9 @@ import java.util.regex.Pattern;
 public class CitationDetector {
 
     static ArrayList<String> prevCasePetitionerList = new ArrayList<>();
+    static String prevSentence = "";
+    static ArrayList<String> caseLawSentencesList = new ArrayList<>();
+    static boolean isPreviousCitation = false;
 
     //todo: solve the issue with wrong sentence splitting and relationship with previous sentence (Ibid, id. see)
     public static void main(String[] args) throws IOException {
@@ -25,9 +28,19 @@ public class CitationDetector {
 
         NLPUtils nlpUtils = new NLPUtils("tokenize,ssplit");
 
+        //to remove the four sentences contatining topic and other meta data
+        String topic = sc.nextLine();
+        sc.nextLine();
+        sc.nextLine();
+        sc.nextLine();
+
         while(sc.hasNextLine()){
             String paragraph = sc.nextLine();
             Annotation ann = nlpUtils.annotate(paragraph);
+
+            if(topic.trim().equals(paragraph.trim())){
+                continue;
+            }
 
             List<CoreMap> sentences = ann.get(CoreAnnotations.SentencesAnnotation.class);
             for (CoreMap sentence : sentences) {
@@ -37,7 +50,11 @@ public class CitationDetector {
                 petitioner_based_identify(sentence.toString());
                 bw.write(sentence.toString());
                 bw.newLine();
+
+                //keep this as the last line within for loop
+                prevSentence = sentence.toString();
             }
+
 
 
         }
@@ -96,6 +113,26 @@ public class CitationDetector {
         }
         return false;
     }
+
+    public static boolean see_identify(String text){
+        String regex = "^See\\s.*$";
+
+        if(text.matches(regex)){
+            return true;
+        }
+        return false;
+    }
+
+
+    public static boolean not_ended_sent_identify(String text){
+        String regex = "^.*\"$";
+        if(text.matches(regex)){
+            return true;
+        }
+        return false;
+    }
+
+
 
 
 }
